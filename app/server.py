@@ -120,7 +120,7 @@ def list_languages():
         key=lambda x: x['name']
     )
 
-    return jsonify({"languages": readable_languages})
+    return jsonify(readable_languages)
 
 
 import re
