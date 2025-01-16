@@ -3,6 +3,7 @@
 from flask import Flask, request, send_file, jsonify
 from gevent.pywsgi import WSGIServer
 from dotenv import load_dotenv
+from flask_cors import CORS
 import os
 
 from handle_text import prepare_tts_input_with_context
@@ -10,6 +11,7 @@ from tts_handler import generate_speech, get_models, get_voices
 from utils import getenv_bool, require_api_key, AUDIO_FORMAT_MIME_TYPES
 
 app = Flask(__name__)
+CORS(app)
 load_dotenv()
 
 API_KEY = os.getenv('API_KEY', 'your_api_key_here')
@@ -21,6 +23,7 @@ DEFAULT_SPEED = float(os.getenv('DEFAULT_SPEED', 1.2))
 
 REMOVE_FILTER = getenv_bool('REMOVE_FILTER', False)
 EXPAND_API = getenv_bool('EXPAND_API', True)
+
 
 # DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'tts-1')
 
@@ -42,20 +45,23 @@ def text_to_speech():
 
     response_format = data.get('response_format', DEFAULT_RESPONSE_FORMAT)
     speed = float(data.get('speed', DEFAULT_SPEED))
-    
+
     mime_type = AUDIO_FORMAT_MIME_TYPES.get(response_format, "audio/mpeg")
 
     # Generate the audio file in the specified format with speed adjustment
     output_file_path = generate_speech(text, voice, response_format, speed)
 
     # Return the file with the correct MIME type
-    return send_file(output_file_path, mimetype=mime_type, as_attachment=True, download_name=f"speech.{response_format}")
+    return send_file(output_file_path, mimetype=mime_type, as_attachment=True,
+                     download_name=f"speech.{response_format}")
+
 
 @app.route('/v1/models', methods=['GET', 'POST'])
 @app.route('/models', methods=['GET', 'POST'])
 @require_api_key
 def list_models():
     return jsonify({"data": get_models()})
+
 
 @app.route('/v1/voices', methods=['GET', 'POST'])
 @app.route('/voices', methods=['GET', 'POST'])
@@ -69,16 +75,19 @@ def list_voices():
 
     return jsonify({"voices": get_voices(specific_language)})
 
+
 @app.route('/v1/voices/all', methods=['GET', 'POST'])
 @app.route('/voices/all', methods=['GET', 'POST'])
 @require_api_key
 def list_all_voices():
     return jsonify({"voices": get_voices('all')})
 
+
 """
 Support for ElevenLabs and Azure AI Speech
     (currently in beta)
 """
+
 
 # http://localhost:5050/elevenlabs/v1/text-to-speech
 # http://localhost:5050/elevenlabs/v1/text-to-speech/en-US-AndrewNeural
@@ -87,7 +96,7 @@ Support for ElevenLabs and Azure AI Speech
 def elevenlabs_tts(voice_id):
     if not EXPAND_API:
         return jsonify({"error": f"Endpoint not allowed"}), 500
-    
+
     # Parse the incoming JSON payload
     try:
         payload = request.json
@@ -116,6 +125,7 @@ def elevenlabs_tts(voice_id):
     # Return the generated audio file
     return send_file(output_file_path, mimetype="audio/mpeg", as_attachment=True, download_name="speech.mp3")
 
+
 # tts.speech.microsoft.com/cognitiveservices/v1
 # https://{region}.tts.speech.microsoft.com/cognitiveservices/v1
 # http://localhost:5050/azure/cognitiveservices/v1
@@ -124,7 +134,7 @@ def elevenlabs_tts(voice_id):
 def azure_tts():
     if not EXPAND_API:
         return jsonify({"error": f"Endpoint not allowed"}), 500
-    
+
     # Parse the SSML payload
     try:
         ssml_data = request.data.decode('utf-8')
@@ -154,6 +164,7 @@ def azure_tts():
 
     # Return the generated audio file
     return send_file(output_file_path, mimetype="audio/mpeg", as_attachment=True, download_name="speech.mp3")
+
 
 print(f" Edge TTS (Free Azure TTS) Replacement for OpenAI's TTS API")
 print(f" ")
