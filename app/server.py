@@ -5,6 +5,7 @@ from gevent.pywsgi import WSGIServer
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
+import pycountry
 
 from handle_text import prepare_tts_input_with_context
 from tts_handler import generate_speech, get_models, get_voices
@@ -81,6 +82,66 @@ def list_voices():
 @require_api_key
 def list_all_voices():
     return jsonify({"voices": get_voices('all')})
+
+
+@app.route('/v1/languages', methods=['GET'])
+@app.route('/languages', methods=['GET'])
+@require_api_key
+def list_languages():
+    voices = get_voices('all')
+    language_voice_count = {}
+
+    for voice in voices:
+        lang = voice['language']
+        if lang in language_voice_count:
+            language_voice_count[lang] += 1
+        else:
+            language_voice_count[lang] = 1
+
+    readable_languages = []
+    for lang, count in language_voice_count.items():
+        try:
+            language = pycountry.languages.get(alpha_2=lang.split('-')[0])
+            readable_languages.append({
+                "code": lang,
+                "name": language.name if language else lang,
+                "voice_count": count
+            })
+        except KeyError:
+            readable_languages.append({
+                "code": lang,
+                "name": lang,
+                "voice_count": count
+            })
+
+    # Remove duplicates and sort alphabetically by language name
+    readable_languages = sorted(
+        {lang['code']: lang for lang in readable_languages}.values(),
+        key=lambda x: x['name']
+    )
+
+    return jsonify({"languages": readable_languages})
+
+
+import re
+
+@app.route('/v1/voices/<language_code>', methods=['GET'])
+@app.route('/voices/<language_code>', methods=['GET'])
+@require_api_key
+def list_voices_by_language(language_code):
+    voices = get_voices(language_code)
+    voice_list = []
+    for voice in voices:
+        # Extract the name part from the voice name
+        name_parts = voice["name"].split('-')
+        if len(name_parts) > 2:
+            name = name_parts[2].replace('Neural', '').strip()
+            # Add space before each uppercase letter
+            name = re.sub(r'(?<!^)(?=[A-Z])', ' ', name)
+        else:
+            name = voice["name"]
+        voice_list.append({"code": voice["name"], "name": name, "gender": voice["gender"]})
+    return jsonify({"voices": voice_list})
 
 
 """
