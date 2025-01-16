@@ -105,13 +105,13 @@ def list_languages():
             readable_languages.append({
                 "code": lang,
                 "name": language.name if language else lang,
-                "voice_count": count
+                "voiceAvailableCount": count
             })
         except KeyError:
             readable_languages.append({
                 "code": lang,
                 "name": lang,
-                "voice_count": count
+                "voiceAvailableCount": count
             })
 
     # Remove duplicates and sort alphabetically by language name
@@ -125,11 +125,12 @@ def list_languages():
 
 import re
 
-@app.route('/v1/voices/<language_code>', methods=['GET'])
-@app.route('/voices/<language_code>', methods=['GET'])
+
+@app.route('/v1/voices/<languageCode>', methods=['GET'])
+@app.route('/voices/<languageCode>', methods=['GET'])
 @require_api_key
-def list_voices_by_language(language_code):
-    voices = get_voices(language_code)
+def list_voices_by_language(languageCode):
+    voices = get_voices(languageCode)
     voice_list = []
     for voice in voices:
         # Extract the name part from the voice name
@@ -141,7 +142,7 @@ def list_voices_by_language(language_code):
         else:
             name = voice["name"]
         voice_list.append({"code": voice["name"], "name": name, "gender": voice["gender"]})
-    return jsonify({"voices": voice_list})
+    return jsonify(voice_list)
 
 
 """
