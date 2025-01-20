@@ -2,6 +2,7 @@
 
 from flask import Flask, request, send_file, jsonify
 from gevent.pywsgi import WSGIServer
+import re
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
@@ -102,10 +103,12 @@ def list_languages():
     for lang, count in language_voice_count.items():
         try:
             language = pycountry.languages.get(alpha_2=lang.split('-')[0])
+            country = pycountry.countries.get(alpha_2=lang.split('-')[1])
             readable_languages.append({
                 "code": lang,
                 "name": language.name if language else lang,
-                "voiceAvailableCount": count
+                "country": country.name if country else lang,
+                "voiceAvailableCount": count,
             })
         except KeyError:
             readable_languages.append({
@@ -121,9 +124,6 @@ def list_languages():
     )
 
     return jsonify(readable_languages)
-
-
-import re
 
 
 @app.route('/v1/voices/<languageCode>', methods=['GET'])
