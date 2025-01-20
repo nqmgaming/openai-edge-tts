@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import os
 import pycountry
+import flag
 
 from handle_text import prepare_tts_input_with_context
 from tts_handler import generate_speech, get_models, get_voices
@@ -104,16 +105,20 @@ def list_languages():
         try:
             language = pycountry.languages.get(alpha_2=lang.split('-')[0])
             country = pycountry.countries.get(alpha_2=lang.split('-')[1])
+            flg = flag.flag(lang.split('-')[1])
             readable_languages.append({
                 "code": lang,
                 "name": language.name if language else lang,
                 "country": country.name if country else lang,
+                "flag": flg,
                 "voiceAvailableCount": count,
             })
         except KeyError:
             readable_languages.append({
                 "code": lang,
                 "name": lang,
+                "country": lang,
+                "flag": "",
                 "voiceAvailableCount": count
             })
 

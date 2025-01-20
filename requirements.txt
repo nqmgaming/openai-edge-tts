@@ -5,3 +5,4 @@ edge-tts
 emoji
 flask-cors
 pycountry
+emoji-country-flag
