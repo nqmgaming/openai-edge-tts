@@ -72,9 +72,9 @@ def generate_sse_audio_stream(text, voice, speed):
         }
         yield f"data: {json.dumps(error_event)}\n\n"
 
+
 # OpenAI endpoint format
 @app.route('/v1/audio/speech', methods=['POST'])
-@app.route('/audio/speech', methods=['POST'])  # Add this line for the alias
 @require_api_key
 def text_to_speech():
     try:
@@ -144,23 +144,20 @@ def text_to_speech():
         # Return a 500 error for unhandled exceptions, which is more standard than 400
         return jsonify({"error": "An internal server error occurred", "details": str(e)}), 500
 
+
 # OpenAI endpoint format
 @app.route('/v1/models', methods=['GET', 'POST'])
-@app.route('/models', methods=['GET', 'POST'])
-@app.route('/v1/audio/models', methods=['GET', 'POST'])
-@app.route('/audio/models', methods=['GET', 'POST'])
 def list_models():
     return jsonify({"models": get_models_formatted()})
 
+
 # OpenAI endpoint format
 @app.route('/v1/audio/voices', methods=['GET', 'POST'])
-@app.route('/audio/voices', methods=['GET', 'POST'])
 def list_voices_formatted():
     return jsonify({"voices": get_voices_formatted()})
 
 
 @app.route('/v1/voices', methods=['GET', 'POST'])
-@app.route('/voices', methods=['GET', 'POST'])
 @require_api_key
 def list_voices():
     specific_language = None
@@ -173,14 +170,12 @@ def list_voices():
 
 
 @app.route('/v1/voices/all', methods=['GET', 'POST'])
-@app.route('/voices/all', methods=['GET', 'POST'])
 @require_api_key
 def list_all_voices():
     return jsonify({"voices": get_voices('all')})
 
 
 @app.route('/v1/languages', methods=['GET'])
-@app.route('/languages', methods=['GET'])
 @require_api_key
 def list_languages():
     voices = get_voices('all')
@@ -225,7 +220,6 @@ def list_languages():
 
 
 @app.route('/v1/voices/<languageCode>', methods=['GET'])
-@app.route('/voices/<languageCode>', methods=['GET'])
 @require_api_key
 def list_voices_by_language(languageCode):
     voices = get_voices(languageCode)
